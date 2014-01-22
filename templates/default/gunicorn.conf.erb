@@ -1,0 +1,11 @@
+[program:<%= @domain %>]
+
+command=<%= @app_root %>/bin/gunicorn <%= @app_name %>.wsgi:application -b unix:/tmp/gunicorn_<%= @domain %>.sock  -c <%= @conf %> --pythonpath <%= @app_root %> --workers=2 --timeout=30
+user=<%= @user %>
+group=<%= @group %>
+log-level=debug
+autostart=true
+autorestart=true
+redirect_stderr=True
+stdout_logfile = /var/log/supervisor/%(program_name)s-stdout.log
+stderr_logfile = /var/log/supervisor/%(program_name)s-stderr.log

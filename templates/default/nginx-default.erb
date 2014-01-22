@@ -1,0 +1,56 @@
+upstream <%= @domain %> {
+    server unix:/tmp/gunicorn_<%= @domain %>.sock;
+}
+
+#Rewrite www.<%= @domain %> to <%= @domain %>
+server {
+    server_name  www.<%= @domain %>;
+    rewrite ^(.*) http://<%= @domain %>$1 permanent;
+}
+
+server {
+    listen 80 default_server;
+    listen 443;
+    server_name <%= @domain %>;
+    client_max_body_size 500m;
+    
+   
+    # path for static files
+    root <%= @app_home %>/<%= @staticfiles_root %>;
+    location = /favicon.ico {
+        allow all;
+        alias <%= @app_root %>/static/img/favicon.ico;
+    }
+
+    
+
+    location ^~ /static/admin {
+        allow all;
+        alias <%= @app_home %>/lib/python2.7/site-packages/django/contrib/admin/static/admin;
+    }
+
+    location /static {
+        allow all;
+        alias <%= @app_home %>/<%= @staticfiles_root %>;
+    }
+
+    location / {
+        try_files $uri @proxy_to_app;
+    } 
+    
+    location @proxy_to_app {
+        access_log /var/log/nginx/access.log;
+        allow all;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+        proxy_pass http://<%= @domain %>;
+    }
+    
+    error_page 500 502 503 504 /500.html;
+    location = /500.html {
+        allow all;
+        alias <%= @project_home %>/templates/500.html;
+    }
+}
+
